@@ -10,6 +10,8 @@ import useResponsive from "@/hooks/useResponsive";
 import { useListSites } from "@/hooks/useListSites";
 import { useFirstPathElement } from "@/hooks/useFirstPathElement";
 import { ReturnSitesDataType } from "@/services/sites.service";
+import { Box, Button, Typography } from "@mui/material";
+import { Alert, AlertTitle } from "@mui/lab";
 
 export const DashboardWrapper = ({ children }: { children: ReactNode }) => {
   const isDesktop = useResponsive("up", "lg");
@@ -20,6 +22,8 @@ export const DashboardWrapper = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
   const pathAdmin = useFirstPathElement();
   const { data } = useListSites();
+
+  const isHideSideBar = pathname === "/admin";
 
   const getValidParamsId = useCallback(
     (list: ReturnSitesDataType[], id: string | string[]) => {
@@ -52,13 +56,35 @@ export const DashboardWrapper = ({ children }: { children: ReactNode }) => {
     setOpen(false);
   };
 
+  const login = async () => {
+    await window.nostr!.getPublicKey();
+    window.location.reload();
+  };
+
   return (
     <MainWrapper>
-      <SideBarNav handleClose={handleClose} isOpen={isOpen} />
       <MainContent isDesktop={isDesktop}>
-        <Header handleOpen={handleOpen} />
-        <PageWrapper>{isLogin ? children : "Please login"}</PageWrapper>
+        <Header handleOpen={handleOpen} hideSideBar={isHideSideBar} />
+        <PageWrapper>
+          {isLogin ? (
+            children
+          ) : (
+            <Box sx={{ display: "flex", height: "100%" }}>
+              <Box sx={{ margin: "auto", textAlign: 'center' }}>
+                <Button variant="contained" color="decorate" onClick={login}>
+                  Login
+                </Button>
+                <Typography sx={{ marginTop: "15px" }}>
+                  Please log in to manager your websites.
+                </Typography>
+              </Box>
+            </Box>
+          )}
+        </PageWrapper>
       </MainContent>
+      {!isHideSideBar && (
+        <SideBarNav handleClose={handleClose} isOpen={isOpen} />
+      )}
     </MainWrapper>
   );
 };

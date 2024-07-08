@@ -11,18 +11,20 @@ import { useEditSettingMode } from "@/hooks/useEditSettingMode";
 import { IBaseSetting } from "@/types/setting.types";
 import { HASH_CONFIG } from "@/consts";
 
-interface ITitleDescription extends IBaseSetting {
-  url: string;
+interface IPlugins extends IBaseSetting {
+  codeinjectionHead: string;
+  codeinjectionFoot: string;
 }
 
-export const URL = ({
-  url,
+export const Plugins = ({
+  codeinjectionHead,
+  codeinjectionFoot,
   handleChange,
   handleBlur,
   submitForm,
   isLoading,
-}: ITitleDescription) => {
-  const [isEdit, handleAction] = useEditSettingMode(submitForm);
+}: IPlugins) => {
+  const [isEdit, handleAction] = useEditSettingMode(submitForm, isLoading);
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDisabled, setDisabled] = useState(false);
   const handleClick = () => {
@@ -37,10 +39,10 @@ export const URL = ({
   }, [isDisabled]);
 
   return (
-    <StyledSettingCol id={HASH_CONFIG.URL}>
+    <StyledSettingCol id={HASH_CONFIG.PLUGINS}>
       <StyledSettingBlock>
         <StyledHeadSettingBlock>
-          <Typography variant="h6">URL</Typography>
+          <Typography variant="h6">Plugins</Typography>
 
           <SaveButton
             isEdit={isEdit}
@@ -50,18 +52,38 @@ export const URL = ({
         </StyledHeadSettingBlock>
 
         <Typography variant="body2" sx={{ mb: 1 }}>
-          Url for site
+          Write some plugins in header and footer
         </Typography>
 
         <StyledFormControl disabled={!isEdit} fullWidth size="small">
-          <InputLabel htmlFor="url">URL</InputLabel>
+          <InputLabel htmlFor="codeinjection_head">
+            Code injection in header
+          </InputLabel>
           <OutlinedInput
             inputRef={inputRef}
-            id="url"
-            name="url"
-            label="URL"
+            id="codeinjection_head"
+            name="codeinjection_head"
+            label="Code injection in header"
+            multiline
+            rows={5}
             onChange={handleChange}
-            value={url}
+            value={codeinjectionHead}
+            onBlur={handleBlur}
+          />
+        </StyledFormControl>
+
+        <StyledFormControl disabled={!isEdit} fullWidth size="small">
+          <InputLabel htmlFor="codeinjection_foot">
+            Code injection in footer
+          </InputLabel>
+          <OutlinedInput
+            id="codeinjection_foot"
+            name="codeinjection_foot"
+            label="Code injection in footer"
+            multiline
+            rows={5}
+            onChange={handleChange}
+            value={codeinjectionFoot}
             onBlur={handleBlur}
           />
         </StyledFormControl>

@@ -1,7 +1,10 @@
-import WebTwoToneIcon from "@mui/icons-material/WebTwoTone";
-import LanguageTwoToneIcon from "@mui/icons-material/LanguageTwoTone";
+// import WebTwoToneIcon from "@mui/icons-material/WebTwoTone";
+// import LanguageTwoToneIcon from "@mui/icons-material/LanguageTwoTone";
 import TitleTwoToneIcon from "@mui/icons-material/TitleTwoTone";
-import LineWeightTwoToneIcon from "@mui/icons-material/LineWeightTwoTone";
+import ColorizeTwoToneIcon from "@mui/icons-material/ColorizeTwoTone";
+import SegmentTwoToneIcon from "@mui/icons-material/SegmentTwoTone";
+import TagIcon from "@mui/icons-material/Tag";
+// import LineWeightTwoToneIcon from "@mui/icons-material/LineWeightTwoTone";
 import GridOnTwoToneIcon from "@mui/icons-material/GridOnTwoTone";
 import AccountCircleTwoToneIcon from "@mui/icons-material/AccountCircleTwoTone";
 import AltRouteTwoToneIcon from "@mui/icons-material/AltRouteTwoTone";
@@ -10,18 +13,8 @@ import FavoriteTwoToneIcon from "@mui/icons-material/FavoriteTwoTone";
 import LinkTwoToneIcon from "@mui/icons-material/LinkTwoTone";
 import ImageTwoToneIcon from "@mui/icons-material/ImageTwoTone";
 import AppsTwoToneIcon from "@mui/icons-material/AppsTwoTone";
-import img1 from "../../public/images/preview-theme/1.png";
-import img2 from "../../public/images/preview-theme/2.png";
-import img3 from "../../public/images/preview-theme/3.png";
-import img4 from "../../public/images/preview-theme/4.png";
-import img5 from "../../public/images/preview-theme/5.png";
-import img6 from "../../public/images/preview-theme/6.png";
-import img7 from "../../public/images/preview-theme/7.png";
-import img8 from "../../public/images/preview-theme/8.png";
-import img9 from "../../public/images/preview-theme/9.png";
-import img10 from "../../public/images/preview-theme/10.png";
-import img11 from "../../public/images/preview-theme/11.png";
-import img12 from "../../public/images/preview-theme/12.png";
+import SettingsTwoToneIcon from "@mui/icons-material/SettingsTwoTone";
+import CodeTwoToneIcon from "@mui/icons-material/CodeTwoTone";
 
 import waveDemo from "../../public/images/preview-theme/cd-demo.npub.pro.png";
 import rubyDemo from "../../public/images/preview-theme/croxroadnews-demo.npub.pro.png";
@@ -42,6 +35,9 @@ import pawayDemo from "../../public/images/preview-theme/onyx-demo.npub.pro.png"
 import bulletinDemo from "../../public/images/preview-theme/rabble-demo.npub.pro.png";
 import editionDemo from "../../public/images/preview-theme/alanbwt-demo.npub.pro.png";
 import digestDemo from "../../public/images/preview-theme/tony-demo.npub.pro.png";
+import microSimplyDemo from "../../public/images/preview-theme/corndalorian-npub-pro.npub.pro.png";
+import microRubyDemo from "../../public/images/preview-theme/m-t-npub-pro.npub.pro.png";
+import lieblingDemo from "../../public/images/preview-theme/laeserin-npub-pro.npub.pro.png";
 
 // import AccessTimeTwoToneIcon from "@mui/icons-material/AccessTimeTwoTone";
 // import LockTwoToneIcon from "@mui/icons-material/LockTwoTone";
@@ -61,15 +57,20 @@ export const NAV_CONFIG = [
     path: "dashboard",
     icon: <GridOnTwoToneIcon />,
   },
+  // {
+  //   title: "View site",
+  //   path: "view-site",
+  //   icon: <WebTwoToneIcon />,
+  // },
+  // {
+  //   title: "Explore",
+  //   path: "explore",
+  //   icon: <LanguageTwoToneIcon />,
+  // },
   {
-    title: "View site",
-    path: "view-site",
-    icon: <WebTwoToneIcon />,
-  },
-  {
-    title: "Explore",
-    path: "explore",
-    icon: <LanguageTwoToneIcon />,
+    title: "Settings",
+    path: "settings",
+    icon: <SettingsTwoToneIcon />,
   },
 ];
 
@@ -89,12 +90,21 @@ export const HASH_CONFIG = {
   URL: "url",
   ICON: "icon",
   IMAGE: "image",
+  HASHTAGS: "hashtags",
+  KINDS: "kinds",
+  ACCENT_COLOR: "accent-color",
+  PLUGINS: "plugins",
 };
 
 export const SETTINGS_CONFIG = [
   {
     title: "General settings",
     sublist: [
+      {
+        title: "Website address",
+        path: HASH_CONFIG.URL,
+        icon: <LinkTwoToneIcon />,
+      },
       {
         title: "Title & Description",
         path: HASH_CONFIG.TITLE_DESCRIPTION,
@@ -110,11 +120,11 @@ export const SETTINGS_CONFIG = [
       //   path: HASH_CONFIG.LANGUAGE,
       //   icon: <TranslateTwoToneIcon />,
       // },
-      {
-        title: "Meta data",
-        path: HASH_CONFIG.META_DATA,
-        icon: <LineWeightTwoToneIcon />,
-      },
+      // {
+      //   title: "Meta data",
+      //   path: HASH_CONFIG.META_DATA,
+      //   icon: <LineWeightTwoToneIcon />,
+      // },
       // {
       //   title: "X card",
       //   path: HASH_CONFIG.X_CARD,
@@ -135,15 +145,35 @@ export const SETTINGS_CONFIG = [
         path: HASH_CONFIG.CONTRIBUTORS,
         icon: <AccountCircleTwoToneIcon />,
       },
+      {
+        title: "Hashtags",
+        path: HASH_CONFIG.HASHTAGS,
+        icon: <TagIcon />,
+      },
+      {
+        title: "Kinds",
+        path: HASH_CONFIG.KINDS,
+        icon: <SegmentTwoToneIcon />,
+      },
+      {
+        title: "Plugins",
+        path: HASH_CONFIG.PLUGINS,
+        icon: <CodeTwoToneIcon />,
+      },
     ],
   },
   {
-    title: "Site",
+    title: "Design",
     sublist: [
       {
-        title: "Design & Branding",
+        title: "Theme",
         path: HASH_CONFIG.DESIGN_BRANDING,
         icon: <BrushTwoToneIcon />,
+      },
+      {
+        title: "Accent color",
+        path: HASH_CONFIG.ACCENT_COLOR,
+        icon: <ColorizeTwoToneIcon />,
       },
       {
         title: "Icon",
@@ -156,11 +186,6 @@ export const SETTINGS_CONFIG = [
         icon: <ImageTwoToneIcon />,
       },
       {
-        title: "URL",
-        path: HASH_CONFIG.URL,
-        icon: <LinkTwoToneIcon />,
-      },
-      {
         title: "Navigation",
         path: HASH_CONFIG.NAVIGATION,
         icon: <AltRouteTwoToneIcon />,
@@ -171,7 +196,7 @@ export const SETTINGS_CONFIG = [
     title: "Growth",
     sublist: [
       {
-        title: "Recommendation",
+        title: "Recommendations",
         path: HASH_CONFIG.RECOMMENDATION,
         icon: <FavoriteTwoToneIcon />,
       },
@@ -447,6 +472,7 @@ export const TIMEZONE_LIST = [
 ];
 
 export enum TYPES_THEMES_TAG {
+  MICROBLOG = "microblog",
   BLOG = "blog",
   PODCAST = "podcast",
   PHOTOGRAPHY = "photography",
@@ -477,11 +503,32 @@ export const THEMES_PREVIEW = [
     preview: tasteDemo,
   },
   {
+    id: "naddr1qq9x66trwfhj6un4vfusygqgat09ph63mf9y9awuq30rtvm3jqhqd44gq5s4hmpawtwxslxtqspsgqqqwueq49c2sl",
+    tag: "microblog",
+    name: "Micro-ruby",
+    url: "https://m-t-npub-pro.npub.pro/",
+    preview: microRubyDemo,
+  },
+  {
     id: "naddr1qqz8wctkv5pzqz82megd75w6ffp0thqytc6mxuvs9crdd2q9y9d7c0tjm358ejcyqvzqqqrhxg06yarz",
     tag: "podcast",
     name: "Wave",
     url: "https://cd-demo.npub.pro",
     preview: waveDemo,
+  },
+  {
+    id: "naddr1qqxx66trwfhj6umfd4cxc7gzyqyw4hjsmaga5jjz7hwqgh34kdceqtsx665q2g2mas7h9hrg0n9sgqcyqqq8wvsequ5f9",
+    tag: "microblog",
+    name: "Micro-simply",
+    url: "https://corndalorian-npub-pro.npub.pro/",
+    preview: microSimplyDemo,
+  },
+  {
+    id: "naddr1qqyxc6t9vfkxjmn8qgsq36k72r04rkj2gt6acpz7xkehrypwqmt2spfpt0kr6ukudp7vkpqrqsqqqaej4xaw0c",
+    tag: "blog",
+    name: "Liebling",
+    url: "https://laeserin-npub-pro.npub.pro/",
+    preview: lieblingDemo,
   },
   {
     id: "naddr1qqz8yatz0ypzqz82megd75w6ffp0thqytc6mxuvs9crdd2q9y9d7c0tjm358ejcyqvzqqqrhxg05vddj",

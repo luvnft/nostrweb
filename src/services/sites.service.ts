@@ -12,6 +12,8 @@ export type ReturnSitesDataType = {
 
 export type ReturnSettingsSiteDataType = {
   id: string;
+  themeId: string;
+  themeName: string;
   name: string;
   title: string;
   description: string;
@@ -39,13 +41,20 @@ export type ReturnSettingsSiteDataType = {
 
   event?: NostrEvent;
 
+  contributors: string[];
+
   navigation: {
     primary: { title: string; link: string; id: string }[];
     secondary: { title: string; link: string; id: string }[];
   };
+  hashtags: string[];
+  kinds: number[];
+  accentColor: string;
+  codeinjection_head: string;
+  codeinjection_foot: string;
 };
 
-export const getSites = async (): Promise<ReturnSitesDataType[]> => {
+export const getSites = async (): Promise<ReturnSettingsSiteDataType[]> => {
   try {
     return await fetchSites();
     // const res: AxiosResponse<any> = await ApiClient.get("/sites");
@@ -62,7 +71,7 @@ export const getSettingsSite = async (
   try {
     const site = (await fetchSites()).find((s) => s.id === id)!;
     console.log("site", site);
-    return site;
+    return { ...site }; // FIXME remove, add empty hashtags for test and accentColor
     // const res: AxiosResponse<any> = await ApiClient.get(
     //   `/settings-site?id=${id}`,
     // );

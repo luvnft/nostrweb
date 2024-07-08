@@ -40,6 +40,14 @@ export async function GET(req: NextRequest) {
         logo: "",
         ogTitle: "",
         xImage: "",
+        themeName: "",
+        themeId: "",
+        contributors: [],
+        hashtags: [],
+        kinds: [],
+        accentColor: "",
+        codeinjection_head: "",
+        codeinjection_foot: "",
       };
     },
   );

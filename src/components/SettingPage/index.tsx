@@ -5,23 +5,28 @@ import { Typography } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { useSettingsSite } from "@/hooks/useSettingsSite";
 import { useParams } from "next/navigation";
-import { SpinerCircularProgress, SpinerWrap } from "@/components/Spiner";
 import { useFormik } from "formik";
 import { TitleDescription } from "@/components/SettingPage/components/TitleDescription";
-import { MetaData } from "@/components/SettingPage/components/MetaData";
 import { validationSchemaMakePrivateSite } from "@/validations/rules";
 import { Contributors } from "@/components/SettingPage/components/Contributors";
 import { DesignBranding } from "@/components/SettingPage/components/DesignBranding";
 import { Recommendation } from "@/components/SettingPage/components/Recommendation";
 import { Icon } from "@/components/SettingPage/components/Icon";
 import { ImageBanner } from "@/components/SettingPage/components/Image";
-import { URL } from "@/components/SettingPage/components/URL";
 import { Navigation } from "@/components/SettingPage/components/Navigation";
 import { editSite } from "@/services/nostr/api";
 import { ReturnSettingsSiteDataType } from "@/services/sites.service";
+import { Hashtags } from "@/components/SettingPage/components/Hashtags";
+import { AccentColor } from "@/components/SettingPage/components/AccentColor";
+import { Kinds } from "@/components/SettingPage/components/Kinds";
+import { WebsiteAddress } from "./components/WebsiteAddress";
+import { Plugins } from "@/components/SettingPage/components/Plugins";
 
 const initialSettingValue: ReturnSettingsSiteDataType = {
   id: "",
+  themeId: "",
+  themeName: "",
+  contributors: [],
   name: "",
   title: "",
   description: "",
@@ -50,6 +55,11 @@ const initialSettingValue: ReturnSettingsSiteDataType = {
     primary: [],
     secondary: [],
   },
+  hashtags: [],
+  kinds: [],
+  accentColor: "",
+  codeinjection_foot: "",
+  codeinjection_head: "",
 };
 
 export const SettingPage = () => {
@@ -133,9 +143,25 @@ export const SettingPage = () => {
       ...values.navigation,
       [type]: [
         ...values.navigation[type],
-        { title: "", link: "", id: Date.now() },
+        { title: "", link: "", id: ""+Date.now() },
       ],
     });
+  };
+
+  const handleChangeHashtags = (value: string | string[]) => {
+    setFieldValue("hashtags", value);
+  };
+
+  const handleChangeContributors = (pubkeys: string[]) => {
+    setFieldValue("contributors", pubkeys);
+  };
+
+  const handleChangeKinds = (value: number | number[]) => {
+    setFieldValue("kinds", value);
+  };
+
+  const handleChangeColor = (color: string) => {
+    setFieldValue("accentColor", color);
   };
 
   const handleRemoveLinkNavigation = (input: {
@@ -154,23 +180,34 @@ export const SettingPage = () => {
   useEffect(() => {
     if (data) {
       setValues(data);
-      setInitialData(data);
+      const initial = _.cloneDeep(data);
+      setInitialData(initial);
+      console.log("initial values", initial);
     }
   }, [setValues, data]);
 
-  if (isLoadingSetting || isFetching) {
-    return (
-      <SpinerWrap>
-        <SpinerCircularProgress />
-      </SpinerWrap>
-    );
-  }
+  // if (isLoadingSetting || isFetching) {
+  //   return (
+  //     <SpinerWrap>
+  //       <SpinerCircularProgress />
+  //     </SpinerWrap>
+  //   );
+  // }
 
   return (
     <>
       <Typography variant="h4" sx={{ fontWeight: "bold" }}>
         General settings
       </Typography>
+
+      <WebsiteAddress
+        url={values.url}
+        siteId={values.id}
+        handleBlur={handleBlur}
+        handleChange={handleChange}
+        submitForm={submitForm}
+        isLoading={isLoading}
+      />
 
       <TitleDescription
         title={values.title}
@@ -181,22 +218,62 @@ export const SettingPage = () => {
         isLoading={isLoading}
       />
 
-      <MetaData
+      {/* <MetaData
         title={values.metaTitle}
         description={values.metaDescription}
         handleBlur={handleBlur}
         handleChange={handleChange}
         submitForm={submitForm}
         isLoading={isLoading}
+      /> */}
+
+      <Contributors
+        handleChangeContributors={handleChangeContributors}
+        contributors={values.contributors}
+        submitForm={submitForm}
+        isLoading={isLoading}
       />
 
-      <Contributors />
+      <Hashtags
+        handleChangeHashtags={handleChangeHashtags}
+        contributors={values.contributors}
+        selectedHashtags={values.hashtags}
+        submitForm={submitForm}
+        isLoading={isLoading}
+      />
+
+      <Kinds
+        handleChangeKinds={handleChangeKinds}
+        selectedKinds={values.kinds}
+        submitForm={submitForm}
+        isLoading={isLoading}
+      />
+
+      <Plugins
+        codeinjectionHead={values.codeinjection_head}
+        codeinjectionFoot={values.codeinjection_foot}
+        handleBlur={handleBlur}
+        handleChange={handleChange}
+        submitForm={submitForm}
+        isLoading={isLoading}
+      />
 
       <Typography variant="h4" sx={{ fontWeight: "bold", mt: 5 }}>
-        Site
+        Design
       </Typography>
 
-      <DesignBranding />
+      <DesignBranding
+        siteId={values.id}
+        themeName={values.themeName}
+        themeId={values.themeId}
+      />
+
+      <AccentColor
+        handleChangeColor={handleChangeColor}
+        color={values.accentColor}
+        submitForm={submitForm}
+        isLoading={isLoading}
+      />
 
       <Icon
         icon={values.icon}
@@ -208,14 +285,6 @@ export const SettingPage = () => {
 
       <ImageBanner
         image={values.image}
-        handleBlur={handleBlur}
-        handleChange={handleChange}
-        submitForm={submitForm}
-        isLoading={isLoading}
-      />
-
-      <URL
-        url={values.url}
         handleBlur={handleBlur}
         handleChange={handleChange}
         submitForm={submitForm}

@@ -23,7 +23,7 @@ export const ImageBanner = ({
   submitForm,
   isLoading,
 }: ITitleDescription) => {
-  const [isEdit, handleAction] = useEditSettingMode(submitForm);
+  const [isEdit, handleAction] = useEditSettingMode(submitForm, isLoading);
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDisabled, setDisabled] = useState(false);
   const handleClick = () => {
@@ -51,7 +51,7 @@ export const ImageBanner = ({
         </StyledHeadSettingBlock>
 
         <Typography variant="body2" sx={{ mb: 1 }}>
-          Banner for site
+          Website cover image
         </Typography>
 
         <StyledFormControl disabled={!isEdit} fullWidth size="small">

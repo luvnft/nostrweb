@@ -2,7 +2,6 @@ import { ReactNode } from "react";
 import { ThemeWrapper } from "@/mui/ThemeWrapper";
 import { AppWrapper } from "@/components/Layout/AppWrapper";
 import Providers from "@/utils/tanstack/providers.client";
-import { AuthContext } from "@/services/nostr/nostr";
 
 export const metadata = {
   title: "ATL5D Web",
@@ -11,7 +10,18 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
+<<<<<<< HEAD
     <html lang="en" style={{ height: "100%" }}>
+=======
+    <html
+      lang="en"
+      style={{
+        height: "100%",
+        scrollBehavior: "smooth",
+        scrollPaddingTop: "48px",
+      }}
+    >
+>>>>>>> 1b7bcad5f822c81a1859a396c713f78e40fec45d
       <ThemeWrapper>
         <Providers>
           <AppWrapper>{children}</AppWrapper>

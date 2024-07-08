@@ -1,4 +1,9 @@
-import NDK, { NDKEvent, NDKNip07Signer, NDKRelaySet } from "@nostr-dev-kit/ndk";
+import NDK, {
+  NDKEvent,
+  NDKNip07Signer,
+  NDKRelaySet,
+  NostrEvent,
+} from "@nostr-dev-kit/ndk";
 import {
   DefaultAssetFetcher,
   KIND_PACKAGE,
@@ -10,6 +15,7 @@ import {
   SiteAddr,
   Theme,
   eventId,
+  fetchOutboxRelays,
   getProfileSlug,
   parseAddr,
   prepareSite,
@@ -18,21 +24,22 @@ import {
   tv,
 } from "libnostrsite";
 import {
-  SITE_RELAY,
+  fetchWithSession,
   ndk,
+  publishSite,
   srm,
   stag,
   stv,
+  userIsDelegated,
   userProfile,
   userPubkey,
   userRelays,
 } from "./nostr";
 import { nip19 } from "nostr-tools";
 import { NPUB_PRO_API, NPUB_PRO_DOMAIN, THEMES_PREVIEW } from "@/consts";
-import { MIN_POW, minePow } from "./pow";
-import { sha256 } from "@noble/hashes/sha256";
-import { bytesToHex } from "@noble/hashes/utils";
 import { isEqual, omit } from "lodash";
+import { SERVER_PUBKEY, SITE_RELAY } from "./consts";
+import { bytesToHex, randomBytes } from "@noble/hashes/utils";
 
 export interface PreviewSettings {
   themeId: string;
@@ -55,7 +62,9 @@ export interface DesignSettings {
   navigation: { label: string; url: string }[];
 }
 
-let token = "";
+const serverPubkey = SERVER_PUBKEY;
+if (!serverPubkey) throw new Error("No server pubkey");
+
 const themes: NDKEvent[] = [];
 const themePackages: NDKEvent[] = [];
 const parsedThemes: Map<string, Theme> = new Map();
@@ -83,7 +92,7 @@ const prefetchThemesPromise = (async function prefetchThemes() {
   if (!globalThis.document) return;
 
   const addrs = THEMES_PREVIEW.map((t) => t.id).map(
-    (n) => nip19.decode(n).data as nip19.AddressPointer
+    (n) => nip19.decode(n).data as nip19.AddressPointer,
   );
 
   const themeFilter = {
@@ -95,7 +104,7 @@ const prefetchThemesPromise = (async function prefetchThemes() {
   const themeEvents = await ndk.fetchEvents(
     themeFilter,
     { groupable: false },
-    NDKRelaySet.fromRelayUrls([SITE_RELAY], ndk)
+    NDKRelaySet.fromRelayUrls([SITE_RELAY], ndk),
   );
 
   themes.push(...themeEvents);
@@ -109,7 +118,7 @@ const prefetchThemesPromise = (async function prefetchThemes() {
   const packageEvents = await ndk.fetchEvents(
     packageFilter,
     { groupable: false },
-    NDKRelaySet.fromRelayUrls([SITE_RELAY], ndk)
+    NDKRelaySet.fromRelayUrls([SITE_RELAY], ndk),
   );
 
   themePackages.push(...packageEvents);
@@ -117,39 +126,73 @@ const prefetchThemesPromise = (async function prefetchThemes() {
 })();
 
 // https://stackoverflow.com/a/51086893
-export class Mutex {
-  private current: Promise<void> = Promise.resolve();
-  lock = (): Promise<() => void> => {
-    let _resolve: () => void;
-    const p = new Promise<void>((resolve) => {
-      _resolve = () => resolve();
-    });
-    // Caller gets a promise that resolves when the current outstanding
-    // lock resolves
-    const rv = this.current.then(() => _resolve);
-    // Don't allow the next request until the new promise is done
-    this.current = p;
-    // Return the new promise
-    return rv;
-  };
+// export class Mutex {
+//   private current: Promise<void> = Promise.resolve();
+//   lock = (): Promise<() => void> => {
+//     let _resolve: () => void;
+//     const p = new Promise<void>((resolve) => {
+//       _resolve = () => resolve();
+//     });
+//     // Caller gets a promise that resolves when the current outstanding
+//     // lock resolves
+//     const rv = this.current.then(() => _resolve);
+//     // Don't allow the next request until the new promise is done
+//     this.current = p;
+//     // Return the new promise
+//     return rv;
+//   };
 
-  async run(cb: () => Promise<any>) {
-    const unlock = await this.lock();
+//   async run(cb: () => Promise<any>) {
+//     const unlock = await this.lock();
+//     try {
+//       const r = await cb();
+//       unlock();
+//       return r;
+//     } catch (e) {
+//       unlock();
+//       throw e;
+//     }
+//   }
+// }
+
+type MutexEntry = {
+  cb: () => Promise<any>;
+  ok: (r: any) => void;
+  err: (r: any) => void;
+};
+
+export class Mutex {
+  private queue: MutexEntry[] = [];
+  private running = false;
+
+  private async execute() {
+    const { cb, ok, err } = this.queue.shift()!;
+    this.running = true;
     try {
-      const r = await cb();
-      unlock();
-      return r;
+      ok(await cb());
     } catch (e) {
-      unlock();
-      throw e;
+      err(e);
     }
+    this.running = false;
+    if (this.queue.length > 0) this.execute();
+  }
+
+  public hasPending() {
+    return this.queue.length > 0;
+  }
+
+  public async run(cb: () => Promise<any>) {
+    return new Promise(async (ok, err) => {
+      this.queue.push({ cb, ok, err });
+      if (!this.running && this.queue.length === 1) this.execute();
+    });
   }
 }
 
 export async function setPreviewSettings(ns: PreviewSettings) {
   let updated = !isEqual(
     omit(settings, ["themeId", "design"]),
-    omit(ns, "themeId", "design")
+    omit(ns, "themeId", "design"),
   );
 
   let newContribs = !site;
@@ -216,123 +259,19 @@ export async function setPreviewSettings(ns: PreviewSettings) {
   return updated || newTheme;
 }
 
-async function fetchAuthed({
-  ndk,
-  url,
-  method = "GET",
-  body = undefined,
-  pow = 0,
-}: {
-  ndk: NDK;
-  url: string;
-  method?: string;
-  body?: string;
-  pow?: number;
-}) {
-  let authEvent = new NDKEvent(ndk, {
-    pubkey: userPubkey,
-    kind: 27235,
-    created_at: Math.floor(Date.now() / 1000),
-    content: "",
-    tags: [
-      ["u", url],
-      ["method", method],
-    ],
-  });
-  if (body) authEvent.tags.push(["payload", bytesToHex(sha256(body))]);
-
-  // generate pow on auth event
-  if (pow) {
-    const start = Date.now();
-    const powEvent = authEvent.rawEvent();
-    const minedEvent = minePow(powEvent, pow);
-    console.log(
-      "mined pow of",
-      pow,
-      "in",
-      Date.now() - start,
-      "ms",
-      minedEvent
-    );
-    authEvent = new NDKEvent(ndk, minedEvent);
-  }
-
-  authEvent.sig = await authEvent.sign(new NDKNip07Signer());
-  console.log("signed", JSON.stringify(authEvent.rawEvent()));
-
-  const auth = btoa(JSON.stringify(authEvent.rawEvent()));
-
-  return await fetch(url, {
-    method,
-    credentials: "include",
-    headers: {
-      Authorization: `Nostr ${auth}`,
-    },
-    body,
-  });
-}
-
-async function getSessionToken() {
-  let pow = MIN_POW;
-  do {
-    try {
-      const r = await fetchAuthed({
-        ndk,
-        url: `${NPUB_PRO_API}/auth?npub=${nip19.npubEncode(userPubkey)}`,
-        pow,
-      });
-
-      if (r.status === 200) {
-        const data = await r.json();
-        console.log("got session token", data);
-        token = data.token;
-        // done!
-        return;
-      } else if (r.status === 403) {
-        const rep = await r.json();
-        console.log("need more pow", rep);
-        pow = rep.minPow;
-      } else {
-        throw new Error("Bad reply " + r.status);
-      }
-    } catch (e) {
-      console.log("Error", e);
-      break;
-    }
-  } while (pow < MIN_POW + 5);
-
-  throw new Error("Failed to get session token");
-}
-
-async function fetchWithSession(url: string) {
-  try {
-    const fetchIt = async () => {
-      return await fetch(url, {
-        headers: {
-          "X-NpubPro-Token": token,
-        },
-      });
-    };
-
-    const r = await fetchIt();
-
-    if (r.status === 200) return r;
-    if (r.status === 401) {
-      // ensure we're authed
-      await getSessionToken();
-      // retry
-      return fetchIt();
-    } else {
-      return r;
-    }
-  } catch (e) {
-    console.log("fetch error", e);
-    throw e;
+function checkYourSite(s: NDKEvent | NostrEvent) {
+  if (userIsDelegated) {
+    if (s.pubkey === userPubkey)
+      throw new Error("Cannot edit your site in delegated mode");
+    if (s.pubkey !== serverPubkey || tv(s, "u") !== userPubkey)
+      throw new Error("Not your site");
+  } else {
+    if (s.pubkey !== userPubkey) throw new Error("Not your site");
   }
 }
 
 function setSite(s: NDKEvent) {
-  if (s.pubkey !== userPubkey) throw new Error("Not your site");
+  checkYourSite(s);
 
   site = s;
 
@@ -348,6 +287,49 @@ function setSite(s: NDKEvent) {
   };
 }
 
+export async function fetchTopHashtags(pubkeys: string[]) {
+  const relays =
+    pubkeys.length === 1 && pubkeys[0] === userPubkey
+      ? userRelays.slice(0, 3)
+      : await fetchOutboxRelays(ndk, pubkeys);
+
+  console.log("loading tags");
+  const events = await ndk.fetchEvents(
+    [
+      {
+        authors: pubkeys,
+        kinds: [1],
+        limit: 50,
+      },
+      {
+        authors: pubkeys,
+        kinds: [30023],
+        limit: 50,
+      },
+    ],
+    {
+      groupable: false,
+    },
+    NDKRelaySet.fromRelayUrls(relays, ndk),
+  );
+
+  const topTags = new Map<string, number>();
+  for (const t of [...events]
+    .map((e) =>
+      e.tags.filter((t) => t.length >= 2 && t[0] === "t").map((t) => t[1]),
+    )
+    .flat()) {
+    let c = topTags.get(t) || 0;
+    c++;
+    topTags.set(t, c);
+  }
+  const tags = [...topTags.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map((t) => t[0]);
+  console.log("loaded tags", tags);
+  return tags;
+}
+
 async function loadSite() {
   // to figure out the hashtags and navigation we have to load the
   // site posts first, this is kinda ugly and slow but easier to reuse
@@ -356,57 +338,28 @@ async function loadSite() {
   store = new NostrStore("preview", ndk, info, parser);
   await store.load(50);
 
-  console.log("tagsStore", tags);
   if (tags) return;
 
-  console.log("loading tags");
-  const events = await ndk.fetchEvents(
-    [
-      {
-        authors: info.contributor_pubkeys,
-        kinds: [1],
-        limit: 50,
-      },
-      {
-        authors: info.contributor_pubkeys,
-        kinds: [30023],
-        limit: 50,
-      },
-    ],
-    {
-      groupable: false,
-    },
-    NDKRelaySet.fromRelayUrls(userRelays.slice(0, 3), ndk)
-  );
-
-  const topTags = new Map<string, number>();
-  for (const t of [...events]
-    .map((e) =>
-      e.tags.filter((t) => t.length >= 2 && t[0] === "t").map((t) => t[1])
-    )
-    .flat()) {
-    let c = topTags.get(t) || 0;
-    c++;
-    topTags.set(t, c);
-  }
-  tags = [...topTags.entries()].sort((a, b) => b[1] - a[1]).map((t) => t[0]);
-
-  console.log("loaded tags", tags);
+  tags = await fetchTopHashtags(info.contributor_pubkeys);
 }
 
 function setSiteTheme(theme: NDKEvent) {
   if (!site || !theme) throw new Error("Bad params");
+  const title = tv(theme, "title") || "";
+  const version = tv(theme, "version") || "";
+  const name = title + (version ? " v." + version : "");
+
   srm(site, "x");
   stag(site, [
     "x",
     theme.id,
     SITE_RELAY,
-    tv(theme, "x") || "",
-    tv(theme, "title") || "",
+    tv(theme, "x") || "", // package hash
+    name,
   ]);
 }
 
-function getThemePackage(id = '') {
+function getThemePackage(id = "") {
   id = id || settings!.themeId;
 
   const theme = themes.find((t) => eventId(t) === id);
@@ -431,7 +384,8 @@ async function preparePreviewSite() {
     : undefined;
 
   // new site?
-  if (!site || !settings.siteId) {//|| (!site.id && !settings.design)) {
+  if (!site || !settings.siteId) {
+    //|| (!site.id && !settings.design)) {
     // start from zero, prepare site event from input settings,
     // fill everything with defaults
     const event = await prepareSite(ndk, userPubkey, {
@@ -447,7 +401,7 @@ async function preparePreviewSite() {
       !settings.contributors.includes(userPubkey)
     ) {
       const contribSlug = tv(event, "d");
-      let slug = contribSlug + "-1";
+      let slug = contribSlug + "-" + userPubkey.substring(0, 4);
       if (userProfile) {
         const adminSlug = getProfileSlug(userProfile);
         if (adminSlug) slug = contribSlug + "-" + adminSlug;
@@ -460,14 +414,20 @@ async function preparePreviewSite() {
 
     // make sure d-tag is unique, use ':' as
     // suffix separator so that we could parse it and extract
-    // the original d-tag to use as preferred domain name
+    // the original d-tag to use as preferred domain name,
+    // use longer random suffix for delegated sites
     const d_tag = tv(event, "d");
     stv(
       event,
       "d",
-      // https://stackoverflow.com/a/8084248
-      d_tag + ":" + (Math.random() + 1).toString(36).substring(2, 5)
+      d_tag + ":" + bytesToHex(randomBytes(userIsDelegated ? 8 : 3)),
     );
+
+    if (userIsDelegated) {
+      // set admin as owner, server as event author
+      stv(event, "u", userPubkey);
+      event.pubkey = serverPubkey!;
+    }
 
     // reset renderer, init store, etc
     setSite(new NDKEvent(ndk, event));
@@ -490,7 +450,8 @@ async function preparePreviewSite() {
     // for existing sites that have already been published
     // we only update the input settings
 
-    if (site.pubkey !== userPubkey) throw new Error("Not your site");
+    // ensure we actually can edit this site
+    checkYourSite(site);
 
     // theme
     setSiteTheme(pkg);
@@ -548,7 +509,7 @@ async function preparePreviewSite() {
 //   return preparePromise;
 // }
 
-async function getParsedTheme(id = '') {
+async function getParsedTheme(id = "") {
   id = id || settings!.themeId;
 
   const c = parsedThemes.get(id);
@@ -601,7 +562,7 @@ async function renderPreviewHtml(path: string = "/") {
 
 export async function renderPreview(
   iframe: HTMLIFrameElement,
-  path: string = "/"
+  path: string = "/",
 ) {
   if (!iframe) throw new Error("No iframe");
   const html = await renderPreviewHtml(path);
@@ -609,6 +570,8 @@ export async function renderPreview(
   return new Promise<void>((ok) => {
     iframe.src = "/preview.html?" + Math.random();
     iframe.onload = async () => {
+      iframe.onload = null;
+
       const cw = iframe.contentWindow!;
       await setHtml(html, cw.document, cw);
 
@@ -659,21 +622,10 @@ async function publishPreview() {
   const pkg = getThemePackage();
   setSiteTheme(pkg);
 
-  // sign it
-  await site.sign(new NDKNip07Signer());
-  console.log("signed site event", site);
-
-  // publish
-  const r = await site.publish(
-    NDKRelaySet.fromRelayUrls([SITE_RELAY, ...userRelays], ndk)
-  );
-  console.log(
-    "published site event to",
-    [...r].map((r) => r.url)
-  );
+  const event = await publishSite(site, [SITE_RELAY, ...userRelays]);
 
   // return naddr
-  return eventId(site);
+  return eventId(event);
 }
 
 async function fetchSite() {
@@ -706,7 +658,7 @@ async function fetchSite() {
       "#d": [addr.identifier],
     },
     { groupable: false },
-    NDKRelaySet.fromRelayUrls([SITE_RELAY, ...addr.relays], ndk)
+    NDKRelaySet.fromRelayUrls([SITE_RELAY, ...addr.relays], ndk),
   );
   console.log("loaded site event", siteId, event);
 
@@ -769,11 +721,11 @@ export async function publishPreviewSite() {
 
       // need to assign a domain?
       if (!tv(site, "r")) {
-        const requestedDomain = tv(site, "d")!.split(":")[0];
+        const requestedDomain = tv(site, "d")!.split(":")[0].replace("_", "-");
         console.log("naddr", naddr);
         console.log("requesting domain", requestedDomain);
         const reply = await fetchWithSession(
-          `${NPUB_PRO_API}/reserve?domain=${requestedDomain}&site=${naddr}`
+          `${NPUB_PRO_API}/reserve?domain=${requestedDomain}&site=${naddr}`,
         );
         if (reply.status !== 200)
           throw new Error("Failed to reserve domain name");
@@ -801,7 +753,7 @@ export async function publishPreviewSite() {
         const u = new URL(url);
         if (u.hostname.endsWith("." + NPUB_PRO_DOMAIN)) {
           const reply = await fetchWithSession(
-            `${NPUB_PRO_API}/deploy?domain=${u.hostname}&site=${naddr}`
+            `${NPUB_PRO_API}/deploy?domain=${u.hostname}&site=${naddr}`,
           );
           if (reply.status !== 200) throw new Error("Failed to deploy");
 
@@ -880,4 +832,11 @@ export async function prefetchThemes(ids: string[]) {
     assetFetcher.addTheme(theme);
   }
   assetFetcher.load();
+}
+
+export async function checkNpubProDomain(domain: string, naddr: string) {
+  const reply = await fetchWithSession(
+    `${NPUB_PRO_API}/check?domain=${domain}&site=${naddr}`,
+  );
+  return reply.status === 200;
 }

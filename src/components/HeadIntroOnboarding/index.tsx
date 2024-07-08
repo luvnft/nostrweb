@@ -1,25 +1,42 @@
 "use client";
 import {
   StyledContainerIntro,
-  StyledTypographyCaption,
+  StyledLogo,
   StyledTypographySubtitle,
   StyledTypographyTitle,
 } from "@/components/HeadIntroOnboarding/styled";
+import { Button } from "@mui/material";
+import { Logo } from "@/components/Logo";
 
 export const HeadIntroOnboarding = () => {
   return (
     <StyledContainerIntro maxWidth="lg">
+<<<<<<< HEAD
       <StyledTypographyCaption variant="caption" display="block">
         WEB
       </StyledTypographyCaption>
+=======
+      <StyledLogo>
+        <Logo />
+      </StyledLogo>
+>>>>>>> 1b7bcad5f822c81a1859a396c713f78e40fec45d
 
       <StyledTypographyTitle variant="h1">
-        Create a beautiful nostr-based website in seconds
+        Beautiful nostr-based websites for creators
       </StyledTypographyTitle>
 
       <StyledTypographySubtitle variant="subtitle1">
-        Easy to set up. Self-hostable. Just works.
+        Easy setup. Self-hostable. Just works.
       </StyledTypographySubtitle>
+
+      <Button
+        size="large"
+        variant="contained"
+        color="decorate"
+        href="#themes-onboarding"
+      >
+        <b>Pick a theme to start</b>
+      </Button>
     </StyledContainerIntro>
   );
 };
