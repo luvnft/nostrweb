@@ -3,9 +3,8 @@ import { StyledFooter } from "@/components/Pages/Onboarding/components/Footer/st
 export const Footer = () => {
   return (
     <StyledFooter>
-      © Npub.Pro 2024.{" "}
-      <a href="https://github.com/nostrband/nostrsite/">Open-source</a> project
-      by <a href="https://nostr.band">Nostr.Band</a>.
+      © ATL5D Web 2024.{" "}
+      Powered by <a href="https://atl5d.com">ATL5D</a>.
     </StyledFooter>
   );
 };
