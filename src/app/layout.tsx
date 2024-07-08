@@ -10,9 +10,6 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-<<<<<<< HEAD
-    <html lang="en" style={{ height: "100%" }}>
-=======
     <html
       lang="en"
       style={{
@@ -21,7 +18,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         scrollPaddingTop: "48px",
       }}
     >
->>>>>>> 1b7bcad5f822c81a1859a396c713f78e40fec45d
       <ThemeWrapper>
         <Providers>
           <AppWrapper>{children}</AppWrapper>
