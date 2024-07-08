@@ -1,6 +1,6 @@
 export const metadata = {
-  title: "Login | Npub.pro",
-  description: "",
+  title: "Login | ATL5D Web",
+  description: "Customized domains and websites for creators.",
 };
 
 export default function RootLayout({

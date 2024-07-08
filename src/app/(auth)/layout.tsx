@@ -1,8 +1,8 @@
 import { AuthLayout } from "@/components/Layout/AuthLayout/AuthLayout";
 
 export const metadata = {
-  title: "Npub.pro",
-  description: "",
+  title: "ATL5D Web",
+  description: "Customized domains and websites for creators",
 };
 
 export default function RootLayout({

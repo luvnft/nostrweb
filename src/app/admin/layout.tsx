@@ -1,7 +1,7 @@
 import { DashboardWrapper } from "@/components/Layout/DashboardWrapper";
 
 export const metadata = {
-  title: "Admin | Npub.pro",
+  title: "Admin | ATL5D Web",
   description: "",
 };
 
