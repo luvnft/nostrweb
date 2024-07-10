@@ -38,18 +38,16 @@ export const FAQ = () => {
           </Grid>
 
           <Grid item xs={12} sm={6}>
-            <StyledTitleFAQ>Can I self-host?</StyledTitleFAQ>
+            <StyledTitleFAQ>What is the Web.atl5d CRM</StyledTitleFAQ>
           </Grid>
           <StyledGridItem item xs={12} sm={6}>
             <StyledTitleDescription>
-              Yes, absolutely! The easiest way to do that is using the free
-              Github Pages hosting,{" "}
-              <a href="https://blog.npub.pro/post/how-to-self-host-on-github">
-                read more here
+              We use ATL5D Discord as an Atlanta business directly with
+              everyone that subscribes managing their own branded channels.
+              To start{" "}
+              <a href="https://discord.com/servers/atl5d-1244450286337003520">
+              Subscribe
               </a>
-              . A more advanced solution would be to run a docker container that
-              does server-side rendering for your site to improve SEO and link
-              sharing experience, it&apos;s coming soon.
             </StyledTitleDescription>
           </StyledGridItem>
 
@@ -65,17 +63,18 @@ export const FAQ = () => {
               You can use any Nostr client to publish, just make sure your post
               matches the filter you&apos;ve set up for your site (kind and
               hashtags). For long-form posts you can use{" "}
-              <a href="https://habla.news" target="_blank">
-                Habla
+              <a href="https://blogstr.atl5d.com" target="_blank">
+                Blogstr.atl5d
               </a>{" "}
+              or{" "}
+              <a href="https://social.atl5d.com" target="_blank">
+                Social.atl5d
+              </a>
               or{" "}
               <a href="https://highlighter.com" target="_blank">
                 Highlighter
               </a>{" "}
               or{" "}
-              <a href="https://yakihonne.com/" target="_blank">
-                Yakihonne
-              </a>
               , for micro-blog -{" "}
               <a href="https://damus.io/" target="_blank">
                 Damus
@@ -120,14 +119,7 @@ export const FAQ = () => {
             <StyledTitleDescription>
               We will host your website for free on <em>your-name</em>.npub.pro
               address. If you want to attach a custom domain and get other
-              benefits, you can switch to a <a href="#pro">Pro plan</a>. You can
-              also self-host a Nostr site &mdash; all the data is on relays, the
-              engine is{" "}
-              <a href="https://github.com/nostrband/nostrsite/" target="_blank">
-                open-source
-              </a>
-              , and there is no &quot;migration&quot; &mdash; it just works,
-              anywhere.
+              benefits, you can switch to a <a href="#pro">Pro plan</a>.
             </StyledTitleDescription>
           </StyledGridItem>
 
