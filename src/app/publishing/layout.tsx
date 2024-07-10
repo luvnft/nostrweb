@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "Npub.pro | Publishing",
+  title: "Web.atl5d | Publishing",
   description: "",
 };
 

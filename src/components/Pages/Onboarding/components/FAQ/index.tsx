@@ -101,7 +101,7 @@ export const FAQ = () => {
           </Grid>
           <StyledGridItem item xs={12} sm={6}>
             <StyledTitleDescription>
-              The npub.pro website engine follows the outbox model, which means
+              The Web.atl5d website engine follows the outbox model, which means
               that if some relay blocks your events and you change your relay
               list, your website will fetch events from your new relays. We are
               making sure that your Nostr site is as robust as your Nostr
@@ -114,7 +114,7 @@ export const FAQ = () => {
           </Grid>
 
           <Grid item xs={12} sm={6}>
-            <StyledTitleFAQ>Is npub.pro website free?</StyledTitleFAQ>
+            <StyledTitleFAQ>Is Web.atl5d website free?</StyledTitleFAQ>
           </Grid>
           <StyledGridItem item xs={12} sm={6}>
             <StyledTitleDescription>
